@@ -200,7 +200,7 @@ windower.register_event('incoming chunk',function(id,data,modified,injected,bloc
         name = state.scan_results[p.Index] and state.scan_results[p.Index].name or '---',
       }
 
-      if p.Index > 0 and (state.last_tracking_update == nil or os.time() - state.last_tracking_update > settings.log_tracking_delay) and settings.log_tracking then         
+      if p.Index > 0 and (state.last_tracking_update == nil or os.time() - state.last_tracking_update >= settings.log_tracking_delay) and settings.log_tracking then         
         local me = windower.ffxi.get_mob_by_target('me')
         local d = ''
         if me then
@@ -328,6 +328,27 @@ windower.register_event('addon command', function(...)
         settings.find_sleep = n
         settings:save()
       end
+    elseif S{'trackinfo'}:contains(subcmd) then
+      if not args[1] then
+        settings.log_tracking = not settings.log_tracking 
+      elseif S{'yes','on','enabled','enable','true'}:contains(args[1]) then
+        settings.log_tracking = true
+      elseif S{'no','off','disabled','disable','false'}:contains(args[1]) then
+        settings.log_tracking = false
+      end
+      settings:save()
+      log(string.format("Logging tracking info is now turned %s.", settings.log_tracking and 'on' or 'off'))
+    elseif S{'trackinfodelay'}:contains(subcmd) and args[1] then
+      local n = tonumber(args[1])
+      if not n then
+        log("Tracking log delay must be a number.")
+      elseif n < 0 then
+        log("Tracking log delay must be a number greater than 0.")
+      else
+        log(string.format("Tracking log delay is now set to %d seconds.", n))
+        settings.log_tracking_delay = n
+        settings:save()
+      end
     else
       log("Unknown set command. Usable commands: ")
       log("//scanner set delay # - set the autoscan delay to a new positive integer number of seconds.")
@@ -335,6 +356,8 @@ windower.register_event('addon command', function(...)
       log("//scanner set sound sound_name - set the sound effect that plays when a target is found. If left empty, no sound will play.")
       log("//scanner set filter [true|false] - set or toggle filtering in the game UI for widescan targets. If empty, it will toggle.")
       log("//scanner set sleep # - set the number of seconds to sleep after a tracked target is lost (to death or manual cancellation).")
+      log("//scanner set trackinfo [true|false] - set or toggle logging for tracked target info. If empty, it will toggle.")
+      log("//scanner set trackinfodelay # - set the number of seconds to delay between logged tracking info.")
     end
   else
     if not S{'help','h'}:contains(cmd) then
