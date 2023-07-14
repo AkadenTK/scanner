@@ -33,8 +33,8 @@ When scanning with tracking enabled, the closest found target will automatically
 | `//scanner set filter [true/false]`  | Enable, disable, or toggle the filter feature. When enabled, the game's map will only show targets that match the current scan's search keys. Leave the arugment blank to toggle the value. |
 
 ## Examples
-`//scanner autotrack blacktriple 0xD4 0xC0` -- Periodically widescan seeking out "Black Triple Stars" and its placeholders. Tracking will begin once a target is found.
-`//scanner autoscan Ankabut 0x25` -- Periodically widescan seeking out "Ankabut" and its placeholder. No tracking will occur. A sound effect will be played if it is enabled. 
-`//scanner set sound roar` -- Sets the sound effect upon finding a target to the "sounds/roar.wav" sound.
-`//scanner set delay 45` -- Sets the auto-scan base delay to 45 seconds.
-`//scanner set wiggle 15` -- Sets the auto-scan wiggle value to 15 seconds. A widescan will be preformed every 30-60 seconds (randomly).
+- `//scanner autotrack blacktriple 0xD4 0xC0` -- Periodically widescan seeking out "Black Triple Stars" and its placeholders. Tracking will begin once a target is found.
+- `//scanner autoscan Ankabut 0x25` -- Periodically widescan seeking out "Ankabut" and its placeholder. No tracking will occur. A sound effect will be played if it is enabled. 
+- `//scanner set sound roar` -- Sets the sound effect upon finding a target to the "sounds/roar.wav" sound.
+- `//scanner set delay 45` -- Sets the auto-scan base delay to 45 seconds.
+- `//scanner set wiggle 15` -- Sets the auto-scan wiggle value to 15 seconds. A widescan will be preformed every 30-60 seconds (randomly).
