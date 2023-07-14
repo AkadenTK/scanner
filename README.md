@@ -30,7 +30,7 @@ When scanning with tracking enabled, the closest found target will automatically
 | `//scanner set wiggle #`  | Change the auto-scan random wiggle value (seconds) to a positive integer. |
 | `//scanner set sleep #`  | Change the sleep period (seconds) after a tracked target is lost (by death or manual cancellation) before a new auto-scan can begin. |
 | `//scanner set sound [effect_name]`  | Change the sound effect that plays when a target is found in a widescan. Leave `effect_name` empty to disable this feature. |
-| `//scanner set filter [true|false]`  | Enable, disable, or toggle the filter feature. When enabled, the game's map will only show targets that match the current scan's search keys. Leave the arugment blank to toggle the value. |
+| `//scanner set filter [true/false]`  | Enable, disable, or toggle the filter feature. When enabled, the game's map will only show targets that match the current scan's search keys. Leave the arugment blank to toggle the value. |
 
 ## Examples
 `//scanner autotrack blacktriple 0xD4 0xC0` -- Periodically widescan seeking out "Black Triple Stars" and its placeholders. Tracking will begin once a target is found.
