@@ -45,18 +45,12 @@ function alert(message)
   end
 end
 
-function update_zone()
-  local info = windower.ffxi.get_info()
-  current_zone = info.logged_in and info.zone or nil
-end
-
-update_zone()
-
 function on_found_targets(target_indices)
   if not target_indices then return end
 
   local me = {x=0, y=0}
 
+  -- find the closest target
   local closest_target_index = nil
   local closest_dist_sqd = nil
   for i, t in ipairs(target_indices) do
@@ -74,31 +68,34 @@ function on_found_targets(target_indices)
 
   local closest_target = state.scan_results[closest_target_index]
 
+  -- play sound effect
   if not state.sound_played and settings.play_sound then
     windower.play_sound(string.format("%s/sounds/%s.wav", windower.addon_path, settings.play_sound))
     state.sound_played = true
   end
   
+  -- track target
   if not state.track_data and state.autotrack then
     alert(string.format('Scan complete. Found target! Tracking: %s (%d)', closest_target.name, closest_target_index))
     WidescanInterface.TrackingStartSet(closest_target_index)
   else
     alert(string.format('Scan complete. Found target! %s (%d)', closest_target.name, closest_target_index))
   end
-
 end
 function on_no_targets_found()
   alert('Scan complete, no targets found.')
 end
 
 function await_scan_completion(scan_id)
+  -- wait for a delay in the widescan results packets
   while not (state.last_packet_time == nil or os.time() - state.last_packet_time > LAST_SCAN_PACKET_DELAY or state.scan_id ~= scan_id) do
     coroutine.sleep(0.1)
   end
 
-  -- scan complete
+  -- terminate if the scan id is incorrect
   if state.scan_id ~= scan_id then return end
 
+  -- handle scan completed
   if #state.found_target_indices > 0 then
     on_found_targets(state.found_target_indices)
   else
@@ -115,10 +112,11 @@ function perform_scan(targets, scan_id)
     state.scan_id = state.scan_id + 1
     scan_id = state.scan_id
   elseif scan_id ~= state.scan_id then 
-    -- scan was cancelled, abandon scan.
+    -- scan id doesn match, thus the scan was cancelled, abandon scan.
     return
   end
 
+  -- begin the scan. Don't scan if we're tracking or sleeping.
   if not state.track_info and (not state.sleeping_til or os.time() >= state.sleeping_til) then
     local scantype = 'Scanning once'
     if state.autoscan then scantype = 'Scanning' end
@@ -134,6 +132,7 @@ function perform_scan(targets, scan_id)
     await_scan_completion:schedule(1, scan_id)
   end
   
+  -- begin the next scan.
   if state.autoscan then
     local next_scan_time = math.random(settings.autoscan_delay - settings.autoscan_random, settings.autoscan_delay + settings.autoscan_random)
     state.next_scan = os.time() + next_scan_time
@@ -150,6 +149,8 @@ function stop_all()
     alert("Stopping auto-scan.")
   end
   state.autoscan = false
+
+  -- end tracking
   state.autotrack = false
   local widescanInfo = WidescanInterface.GetWidescanInfo()
   if widescanInfo and widescanInfo.Index > 0 then
@@ -159,7 +160,7 @@ function stop_all()
 end
 
 windower.register_event('incoming chunk',function(id,data,modified,injected,blocked)
-  if S{0x0F4}:contains(id) then
+  if S{0x0F4}:contains(id) then -- Widescan result
     if not state.last_packet_time or os.time() - state.last_packet_time > LAST_SCAN_PACKET_DELAY then
       -- clear results
       state.sound_played = false
@@ -167,6 +168,7 @@ windower.register_event('incoming chunk',function(id,data,modified,injected,bloc
       state.scan_results = {}
     end
     state.last_packet_time = os.time()
+    
     local p = packets.parse('incoming', data)
     local name = p['Name']:lower():stripchars(' ')
     if not name or not p.Index or name == '' then return end 
@@ -174,7 +176,9 @@ windower.register_event('incoming chunk',function(id,data,modified,injected,bloc
       x = p['X Offset'], y = p['Y Offset'],
       index = p.Index, level = p.Level, status = p.Status, name = p.Name,
     }
+
     if state.targets then
+      -- match targets by name or index
       for i, t in ipairs(state.targets) do
         if t and t == p.Index then
           state.found_target_indices:append(p.Index)
@@ -189,9 +193,11 @@ windower.register_event('incoming chunk',function(id,data,modified,injected,bloc
         return true -- block non-target packet from reaching the client
       end
     end
-  elseif S{0x0F5}:contains(id) then
+  elseif S{0x0F5}:contains(id) then -- tracking info
     local p = packets.parse('incoming', data)
     if p.Index > 0 then
+      -- tracking is enabled
+
       local _, xo, yo = windower.ffxi.get_map_data(p.X, p.Y, p.Z) 
       state.track_info = {
         x = xo, y = yo,
@@ -200,6 +206,7 @@ windower.register_event('incoming chunk',function(id,data,modified,injected,bloc
         name = state.scan_results[p.Index] and state.scan_results[p.Index].name or '---',
       }
 
+      -- log tracking info
       if p.Index > 0 and (state.last_tracking_update == nil or os.time() - state.last_tracking_update >= settings.log_tracking_delay) and settings.log_tracking then         
         local me = windower.ffxi.get_mob_by_target('me')
         local d = ''
@@ -210,6 +217,7 @@ windower.register_event('incoming chunk',function(id,data,modified,injected,bloc
         state.last_tracking_update = os.time()
       end
     else
+      -- tracking is disabled
       state.track_info = nil
       if state.autoscan and settings.find_sleep then
         state.sleeping_til = os.time() + settings.find_sleep
@@ -376,15 +384,11 @@ windower.register_event('addon command', function(...)
 end)
 
 windower.register_event('zone change',function(new_id)
-  current_zone = new_id
   stop_all()
 end)
 
-windower.register_event('login',function()
-  update_zone()
-end)
 windower.register_event('logout',function()
-  update_zone()
+  stop_all()
 end)
 
 windower.register_event('unload', function()
