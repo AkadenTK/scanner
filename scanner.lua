@@ -184,7 +184,8 @@ windower.register_event('incoming chunk',function(id,data,modified,injected,bloc
           return
         end
       end
-      if settings.filter_map then
+      if settings.filter_map and state.autoscan then
+        -- only filter when autoscan is active
         return true -- block non-target packet from reaching the client
       end
     end
