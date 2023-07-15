@@ -18,6 +18,9 @@ Auto-scan works on a delay-and-wiggle system, where a base delay is modified wit
 ### Tracking
 When scanning with tracking enabled, the closest found target will automatically be tracked via the in-game widescan tracking feature. While tracking, auto-scanning is disabled. After tracking is ended (via target death or by manual removal), an optional sleep period will play out. This sleep period can be configured.
 
+### Filter
+When auto-scanning, the in-game map's widescan feature can be filtered to only show targets that match.
+
 ## Commands
  Command | Action |
 | --- | --- |
